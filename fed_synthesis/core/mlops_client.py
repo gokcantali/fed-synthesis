@@ -53,4 +53,24 @@ class MLOpsClient:
         self.mlops_api.log_metrics(metrics, step=round)
 
     def log_hyperparams(self, hyperparams: dict):
+        """Log hyperparameters to MLOps"""
         self.mlops_api.log_params(hyperparams)
+
+    def log_model(self, model, backend="torch"):
+        """Log the ML model to MLOps"""
+        if backend not in ["torch", "sklearn"]:
+            raise ValueError("Unsupported backend. Currently, only 'torch' and 'sklearn' are supported.")
+
+        model_name = f"{self.experiment_name}-{self.run_name}"
+        if backend == "torch":
+            self.mlops_api.pytorch.log_model(
+                pytorch_model=model,
+                artifact_path=self.experiment_name,
+                registered_model_name=model_name
+            )
+        elif backend == "sklearn":
+            self.mlops_api.sklearn.log_model(
+                sk_model=model,
+                artifact_path=self.experiment_name,
+                registered_model_name=model_name
+            )

@@ -2,6 +2,13 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.poetry]
+name = "fed_synthesis"
+version = "0.1.0"
+description = ""
+authors = ["Gökcan Çantalı <gokcantali@gmail.com>"]
+readme = "README.md"
+
 [project]
 name = "fedl"
 version = "1.0.0"
