@@ -43,3 +43,5 @@ mlartifacts/
 logs/
 airflow.db
 unittest.cfg
+
+!gnn_example/data/
