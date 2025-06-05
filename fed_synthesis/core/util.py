@@ -22,13 +22,3 @@ def exponential_smoothing(data, alpha):
         smoothed_data.append(smoothed_value)
 
     return smoothed_data
-
-
-def get_dataset_splits(client_id):
-    # This function should be provided by the client ML code
-    return [], [], []
-
-
-def initialize_model():
-    # This function should be provided by the client ML code
-    return None

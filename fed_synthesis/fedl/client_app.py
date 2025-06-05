@@ -2,19 +2,18 @@ from dataclasses import asdict
 
 from flwr.client import NumPyClient, Client, ClientApp
 from flwr.common import Context, Config, Scalar
-from flwr.client.mod.localdp_mod import LocalDpMod
 
 from fed_synthesis.core.carbon_tracker_client import CarbonTrackerClient
-from fed_synthesis.core.util import initialize_model, get_dataset_splits
+from gnn_example.fedl_setup import initialize_model, get_dataset_splits
 
 
 class FlowerClient(NumPyClient):
-    def __init__(self, net, trainloader, valloader, testloader, **kwargs):
+    def __init__(self, net, train_set, val_set, test_set, **kwargs):
         super().__init__(**kwargs)
         self.net = net
-        self.trainloader = trainloader
-        self.valloader = valloader
-        self.testloader = testloader
+        self.train_set = train_set
+        self.val_set = val_set
+        self.test_set = test_set
 
     def get_properties(self, config: Config) -> dict[str, Scalar]:
         return self.get_context().node_config
@@ -26,7 +25,7 @@ class FlowerClient(NumPyClient):
         tracker = CarbonTrackerClient(backend="CodeCarbon")
         self.net.set_parameters(parameters, config, is_evaluate=False)
         tracker.start_tracking()
-        metrics = self.net.train_model(self.trainloader, self.valloader, batch_mode=True, epochs=1)
+        metrics = self.net.train_model(self.train_set, self.val_set, batch_mode=True, epochs=1)
         emissions = tracker.stop_tracking()
         # self.emissions = emissions if not math.isnan(emissions) else emissions
 
@@ -44,16 +43,16 @@ class FlowerClient(NumPyClient):
 
         return (
             self.net.get_parameters(),
-            len(self.trainloader),
+            len(self.train_set),
             metrics_to_aggregate
         )
 
     def evaluate(self, parameters, config):
         self.net.set_parameters(parameters, config, is_evaluate=True)
-        _, loss, perf_metrics = self.net.test_model_batch_mode(self.testloader)
+        _, loss, perf_metrics = self.net.test_model_batch_mode(self.test_set)
         print("METRICS OF CLIENT:")
         print(perf_metrics)
-        return loss, len(self.testloader), perf_metrics
+        return loss, len(self.test_set), perf_metrics
 
 
 def construct_flower_client(client_id, context):
@@ -63,7 +62,6 @@ def construct_flower_client(client_id, context):
     # Note: each client gets a different train/validation/test datasets,
     # so each client will train and evaluate on their own unique data partition
     # Read the node_config to fetch data partition associated to this node
-
     train_set, validation_set, test_set = get_dataset_splits(
         client_id
     )
@@ -90,16 +88,7 @@ def client_fn(context: Context) -> Client:
     return flower_client
 
 
-# Create an instance of the mod with the required params
-local_dp_obj = LocalDpMod(
-    0.8, 0.2, 0.0001, 0.0001
-)
-
 # Create the ClientApp
 app = ClientApp(
     client_fn=client_fn,
-    # mods=[
-    #     secaggplus_mod,  # Comment-out to disable SecAgg+
-    #     local_dp_obj  # Comment-out to disable DP
-    # ],
 )

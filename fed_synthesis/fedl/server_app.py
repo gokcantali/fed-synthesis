@@ -6,7 +6,7 @@ from flwr.server import ServerAppComponents, ServerConfig, ServerApp
 from fed_synthesis.core.agg_strategy import FedAvgCF, CF_METHODS
 from fed_synthesis.core.client_selection import SimpleClientManagerWithPrioritizedSampling
 from fed_synthesis.core.mlops_client import MLOpsClient
-from fed_synthesis.core.util import initialize_model
+from gnn_example.fedl_setup import initialize_model
 
 
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -30,9 +30,9 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     return aggregated_metrics
 
 
-NUM_ROUNDS = 10
-METHOD = "simple_avg"
-RUN_NAME = "1st Run"
+NUM_ROUNDS = 20
+METHOD = "lin_reg"
+RUN_NAME = "2nd Run"
 EXPERIMENT_NAME = "TEST-EXP"
 
 PARAMS = {
@@ -97,15 +97,13 @@ def log_model_params_and_metrics_to_mlops(
                 # log the hyperparams only once at the beginning
                 mlops_client.log_hyperparams(hyperparams)
 
-        # if params and current_training_round == NUM_ROUNDS:
-        #     # log the model only once at the end
-        #     model = initialize_model()
-        #     model.set_parameters(params, None, False)
-        #     mlflow.pytorch.log_model(
-        #         pytorch_model=model,
-        #         artifact_path=EXPERIMENT_NAME,
-        #         registered_model_name=f"{EXPERIMENT_NAME}-{RUN_NAME}"
-        #     )
+        if params and current_training_round == NUM_ROUNDS:
+            # log the model only once at the end
+            model = initialize_model()
+            model.set_parameters(params, None, False)
+            mlops_client.log_model(
+                model=model, backend="torch"
+            )
 
 strategy = FedAvgCF(
     fraction_fit=0.6,  # Sample 60% of available clients for training
