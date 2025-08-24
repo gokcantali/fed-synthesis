@@ -1,22 +1,21 @@
-from codecarbon import EmissionsTracker as CodeCarbonEmissionsTracker
+from fed_synthesis.infra.carbontracker_backend import CarbontrackerBackend
+from fed_synthesis.infra.code_carbon_backend import CodeCarbonBackend
 
 
 class CarbonTrackerClient:
     def __init__(self, backend="CodeCarbon"):
-        if backend not in ["CodeCarbon"]:
-            raise ValueError("Unsupported backend. Currently, only 'CodeCarbon' is supported.")
+        if backend not in ["CodeCarbon", "carbontracker"]:
+            raise ValueError("Unsupported backend. Currently, only 'CodeCarbon' and 'carbontracker' are supported.")
 
-        self.tracker = CodeCarbonEmissionsTracker(
-            measure_power_secs=10,
-            experiment_id="2ef8bb00-570a-4110-b59f-68f8b5e5fd2a",
-            save_to_api=False,
-            allow_multiple_runs=True
-        )
+        if backend == "CodeCarbon":
+            self.tracker_backend = CodeCarbonBackend()
+        if backend == "carbontracker":
+            self.tracker_backend = CarbontrackerBackend()
 
     def start_tracking(self):
         """Start tracking carbon emissions."""
-        self.tracker.start()
+        self.tracker_backend.start()
 
     def stop_tracking(self):
         """Stop tracking carbon emissions."""
-        return self.tracker.stop()
+        return self.tracker_backend.stop()
